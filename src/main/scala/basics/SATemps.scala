@@ -9,7 +9,7 @@ object SATemps {
   }
 
   def main(args: Array[String]): Unit = {
-    val source = scala.io.Source.fromFile("data/SanAntonioTemps.csv")
+    val source = scala.io.Source.fromFile("/users/mlewis/CSCI3395-F19/InClassBD/data/SanAntonioTemps.csv")
     val lines = source.getLines()
     val data = lines.drop(2).map(parseLine).toArray
     
@@ -23,13 +23,19 @@ object SATemps {
     val percentDaysWithRain = (daysWithRain / data.length.toDouble) * 100
     println(f"Percent of days with rain: $percentDaysWithRain%2.2f%%")
 
-    val rainyDays = data.filter(_.precipitation > 0)
-    val avgHiForRainy = rainyDays.foldLeft(0.0)((acc, row) => acc + (row.hiTemp / rainyDays.length))
+    val rainyDays = data.filter(_.precipitation >= 1.0)
+    val avgHiForRainy = rainyDays.foldLeft(0.0)(_ + _.precipitation) / rainyDays.length
+    // Calculate without filter
+    //
+    // val (rainySum, rainyCount) = data.foldLeft((0.0, 0)) { case ((sum, cnt), day) =>
+    //   if (day.precipitation >= 1) (sum + day.precipitation, cnt + 1) else (sum, cnt)
+    // }
+    // val avgHiForRainy = rainySum / rainyCount
     println(s"Average hi temp for rainy days: $avgHiForRainy")
 
     val months = data.groupBy(_.month)
 
-    val avgHiTempsPerMonth = months.mapValues((temps) => temps.map(_.hiTemp).sum / temps.length)
+    val avgHiTempsPerMonth = months.mapValues(temps => temps.foldLeft(0.0)(_ + _.precipitation) / temps.length)
     println("Average hi temps per month:")
     (1 to 12).foreach((month) => println(s"Month $month: ${avgHiTempsPerMonth(month)}"))
 
